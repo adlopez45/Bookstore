@@ -1,6 +1,9 @@
 package com.example.Bookstore.Repositories;
 
 import com.example.Bookstore.Models.MembershipCard;
+
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,6 +14,8 @@ public interface MembershipCardRepository extends JpaRepository<MembershipCard, 
     // Buscar tarjeta por número
     MembershipCard findByCardNumber(String cardNumber);
 
+    Optional<MembershipCard> findById(Integer cardId);
+
     // (Opcional) método para recargar saldo directamente
     @Modifying
     @Query("UPDATE MembershipCard m SET m.balance = m.balance + :amount WHERE m.cardId = :cardId")
@@ -20,4 +25,5 @@ public interface MembershipCardRepository extends JpaRepository<MembershipCard, 
     @Modifying
     @Query("UPDATE MembershipCard m SET m.balance = m.balance - :amount WHERE m.cardId = :cardId AND m.balance >= :amount")
     int descontarBalance(@Param("cardId") Integer cardId, @Param("amount") Double amount);
+
 }

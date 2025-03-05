@@ -1,5 +1,6 @@
 package com.example.Bookstore.Controllers;
 
+import com.example.Bookstore.DTO.PurchaseRequest;
 import com.example.Bookstore.Models.Purchase;
 import com.example.Bookstore.Services.PurchaseService;
 import org.springframework.web.bind.annotation.*;
@@ -16,17 +17,11 @@ public class PurchaseController {
 
     private final PurchaseService purchaseService;
 
-    /**
-     * Se inyecta el servicio de Purchase por constructor.
-     */
+
     public PurchaseController(PurchaseService purchaseService) {
         this.purchaseService = purchaseService;
     }
 
-    /**
-     * GET /api/purchases
-     * Lista todas las compras.
-     */
     @GetMapping
     public List<Purchase> getAllPurchases() {
         return purchaseService.findAll();
@@ -75,4 +70,10 @@ public class PurchaseController {
     public void deletePurchase(@PathVariable Integer id) {
         purchaseService.deleteById(id);
     }
+    
+     @PostMapping("/make")
+    public String makePurchase(@RequestBody PurchaseRequest request) {
+        return purchaseService.makePurchase(request);
+    }
+
 }

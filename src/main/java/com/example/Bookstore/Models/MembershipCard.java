@@ -9,23 +9,30 @@ public class MembershipCard {
  @GeneratedValue(strategy = GenerationType.IDENTITY)
  @Column(name = "card_id")
  private Integer cardId;
+
  @Column(name = "card_number", nullable = false, length = 16)
  private String cardNumber;
+
  @Column(name = "balance", nullable = false)
  private Double balance;
+
  @ManyToOne(fetch = FetchType.LAZY)
  @JoinColumn(name = "user_id", nullable = false)
  private User user;
+
  @Column(name = "status")
  private Byte status;
+
  @Temporal(TemporalType.TIMESTAMP)
  @Column(name = "created_at")
  private Date createdAt;
+
  @OneToMany(mappedBy = "membershipCard", cascade = CascadeType.ALL, fetch
 = FetchType.LAZY)
  private List<BalanceHistory> balanceHistory;
  public MembershipCard() {
  }
+ 
  public Integer getCardId() { return cardId; }
  public void setCardId(Integer cardId) { this.cardId = cardId; }
  public String getCardNumber() { return cardNumber; }

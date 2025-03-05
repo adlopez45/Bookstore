@@ -4,6 +4,8 @@ import com.example.Bookstore.Models.MembershipCard;
 import com.example.Bookstore.Repositories.MembershipCardRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.Bookstore.Repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +14,8 @@ import java.util.Optional;
 public class MembershipCardService {
 
     private final MembershipCardRepository membershipCardRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public MembershipCardService(MembershipCardRepository membershipCardRepository) {
         this.membershipCardRepository = membershipCardRepository;
@@ -36,16 +40,25 @@ public class MembershipCardService {
     // Recarga de saldo (ejemplo con validación mínima/máxima)
     @Transactional
     public void recargar(Integer cardId, Double amount) {
-        // Validaciones (mínimo 50,000 y máximo 200,000)
+   
         if (amount < 50000 || amount > 200000) {
             throw new RuntimeException("El valor a recargar debe estar entre 50.000 y 200.000");
         }
-        // Llamada al método del repositorio
-        int rows = membershipCardRepository.recargarBalance(cardId, amount);
-        if (rows == 0) {
-            throw new RuntimeException("No se pudo recargar la tarjeta. Verifica que exista o revisa el saldo.");
+       
+        Optional<MembershipCard> optionalCard = membershipCardRepository.findById(cardId);
+        if (!optionalCard.isPresent()) {
+            throw new RuntimeException("La tarjeta de membresía no existe.");
         }
+        MembershipCard card = optionalCard.get();
+        
+        if (!userRepository.existsById(card.getUser().getUserId())) {
+            throw new RuntimeException("El usuario asociado a la tarjeta no existe.");
+        }
+        
+        card.setBalance(card.getBalance() + amount);
+        membershipCardRepository.save(card);
     }
+    
 
     // DELETE
     public void deleteById(Integer id) {

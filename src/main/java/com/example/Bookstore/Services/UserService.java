@@ -1,10 +1,10 @@
 package com.example.Bookstore.Services;
 
+import java.util.List;
+import org.springframework.stereotype.Service;
 import com.example.Bookstore.Models.User;
 import com.example.Bookstore.Repositories.UserRepository;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
 
 @Service
 public class UserService {
@@ -15,22 +15,49 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    // CREATE/UPDATE
-    public User save(User user) {
+    public User updateUser(Integer userId, User updatedUser) {
+        return userRepository.findById(userId)
+            .map(existingUser -> {
+                // Actualiza solo los campos que se envían en la petición
+                if (updatedUser.getFirstName() != null) {
+                    existingUser.setFirstName(updatedUser.getFirstName());
+                }
+                if (updatedUser.getLastName() != null) {
+                    existingUser.setLastName(updatedUser.getLastName());
+                }
+                if (updatedUser.getEmail() != null) {
+                    existingUser.setEmail(updatedUser.getEmail());
+                }
+                if (updatedUser.getAge() != null) {
+                    existingUser.setAge(updatedUser.getAge());
+                }
+                if (updatedUser.getStatus() != null) {
+                    existingUser.setStatus(updatedUser.getStatus());
+                }
+
+                return userRepository.save(existingUser);
+            })
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + userId));
+    }
+
+    public User registerUser(User user) {
+
         return userRepository.save(user);
     }
 
-    // READ (todos)
+
     public List<User> findAll() {
+       System.out.println("entraste a repositorio de usuario");
         return userRepository.findAll();
     }
 
-    // READ (uno por ID)
+  
     public User findById(Integer id) {
+        System.out.println("entraste a findbyId de usuario");
         return userRepository.findById(id).orElse(null);
     }
 
-    // DELETE
+
     public void deleteById(Integer id) {
         userRepository.deleteById(id);
     }

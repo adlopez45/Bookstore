@@ -9,24 +9,39 @@ public class Purchase {
  @GeneratedValue(strategy = GenerationType.IDENTITY)
  @Column(name = "purchase_id")
  private Integer purchaseId;
+
  @ManyToOne(fetch = FetchType.LAZY)
  @JoinColumn(name = "user_id", nullable = false)
  private User user;
+
  @ManyToOne(fetch = FetchType.LAZY)
  @JoinColumn(name = "card_id")
  private MembershipCard membershipCard;
+
  @Column(name = "total", nullable = false)
  private Double total;
+
  @Column(name = "status")
  private Byte status;
+
  @Temporal(TemporalType.TIMESTAMP)
  @Column(name = "created_at")
  private Date createdAt;
+
  @OneToMany(mappedBy = "purchase", cascade = CascadeType.ALL, fetch =
 FetchType.LAZY)
  private List<PurchaseDetails> purchaseDetails;
  public Purchase() {
  }
+
+ public void setCard(MembershipCard card) {
+    this.membershipCard = card;
+}
+
+public MembershipCard getCard() {
+    return membershipCard;
+}
+
  public Integer getPurchaseId() { return purchaseId; }
  public void setPurchaseId(Integer purchaseId) { this.purchaseId = purchaseId; }
  public User getUser() { return user; }
