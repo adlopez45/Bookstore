@@ -1,5 +1,4 @@
 export enum BookCategory {
-  All = 'all',
   Fiction = '2',
   NonFiction = '3',
   ScienceFiction = '4',
