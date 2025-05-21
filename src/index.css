@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #9d8fbb;
+  --primary-light: #b5a8cc;
+  --primary-dark: #7c6a9a;
+  --secondary: #f1f1f1;
+  --accent: #5d4f7c;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  @apply antialiased;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-[#7c6a9a] hover:bg-[#6b5889] text-white py-2 px-4 rounded-md transition-colors duration-300;
+  }
+  
+  .btn-secondary {
+    @apply bg-[#f1f1f1] hover:bg-[#e0e0e0] text-[#333333] py-2 px-4 rounded-md transition-colors duration-300;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:scale-[1.02];
+  }
+
+  .input-field {
+    @apply w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#9d8fbb] focus:border-transparent;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-[#b5a8cc]/20 rounded-md transition-colors duration-200;
+  }
+
+  .sidebar-link.active {
+    @apply bg-[#b5a8cc]/30 text-[#5d4f7c] font-medium;
+  }
+}
+
+.book-card-animation {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.book-card-animation:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.page-transition {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

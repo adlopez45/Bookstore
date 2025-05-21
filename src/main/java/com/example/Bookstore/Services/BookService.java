@@ -1,11 +1,12 @@
 package com.example.Bookstore.Services;
 
-import com.example.Bookstore.Models.Book;
-import com.example.Bookstore.Repositories.BookRepository;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
+import com.example.Bookstore.Models.Book;
+import com.example.Bookstore.Repositories.BookRepository;
 
 @Service
 public class BookService {
@@ -16,33 +17,34 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-    // CREATE/UPDATE
     public Book save(Book book) {
         return bookRepository.save(book);
     }
 
-    // READ (todos)
     public List<Book> findAll() {
         return bookRepository.findAll();
     }
 
-    // READ (uno por ID)
     public Book findById(Integer id) {
         Optional<Book> optional = bookRepository.findById(id);
         return optional.orElse(null);
     }
 
-    // Búsqueda por ISBN
+
     public Book findByIsbn(String isbn) {
         return bookRepository.findByIsbn(isbn);
     }
 
-    public List<Book> findByTitle(String title) {
-        return bookRepository.findByTitle(title);
+    public List<Book> findByTitleContainingIgnoreCase(String title) {
+        return bookRepository.findByTitleContainingIgnoreCase(title);
     }
 
-    // DELETE
     public void deleteById(Integer id) {
         bookRepository.deleteById(id);
     }
+
+     public List<Book> findByAuthorContainingIgnoreCase(String author) {
+        return bookRepository.findByAuthorContainingIgnoreCase(author);
+    }
+
 }

@@ -2,7 +2,10 @@ package com.example.Bookstore.Models;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "users"})
 @Table(name = "roles")
 public class Role {
  @Id

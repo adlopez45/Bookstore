@@ -1,93 +1,96 @@
 package com.example.Bookstore.Controllers;
 
-import com.example.Bookstore.Models.Book;
-import com.example.Bookstore.Services.BookService;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
-/**
- * Controlador para la entidad Book (libros).
- * Provee endpoints CRUD: listar, obtener por id, crear, actualizar y eliminar libros.
- */
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.Bookstore.Models.Book;
+import com.example.Bookstore.Services.BookService;
+
 @RestController
 @RequestMapping("/api/books")
+@CrossOrigin(origins = "http://localhost:5173")
 public class BookController {
 
     private final BookService bookService;
 
-    /**
-     * Se inyecta el servicio de Book mediante el constructor.
-     */
     public BookController(BookService bookService) {
         this.bookService = bookService;
     }
 
-    /**
-     * GET /api/books
-     * Lista todos los libros.
-     */
     @GetMapping
-    public List<Book> getAllBooks() {
-        return bookService.findAll();
+    public ResponseEntity<List<Book>> getAllBooks() {
+        List<Book> books = bookService.findAll();
+        return ResponseEntity.ok(books);
     }
 
-    /**
-     * GET /api/books/{id}
-     * Retorna un libro según su ID.
-     */
     @GetMapping("/{id}")
-    public Book getBookById(@PathVariable Integer id) {
-        return bookService.findById(id);
+    public ResponseEntity<Book> getBookById(@PathVariable Integer id) {
+        Book book = bookService.findById(id);
+        return book != null ? ResponseEntity.ok(book) : ResponseEntity.notFound().build();
     }
 
     @GetMapping("/isbn/{isbn}")
-    public Book getBookByIsbn(@PathVariable String isbn) {
-        return bookService.findByIsbn(isbn);
+    public ResponseEntity<Book> getBookByIsbn(@PathVariable String isbn) {
+        Book book = bookService.findByIsbn(isbn);
+        return book != null ? ResponseEntity.ok(book) : ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/title/{title}")
-    public List<Book> getBooksByTitle(@PathVariable String title) {
-        return bookService.findByTitle(title);
+    @GetMapping("/title")
+    public List<Book> getBooksByTitle(@RequestParam("name") String title) {
+        return bookService.findByTitleContainingIgnoreCase(title);
     }
 
-    /**
-     * POST /api/books
-     * Crea un nuevo libro.
-     */
+    @GetMapping("/author")
+    public List<Book> getBooksByAuthor(@RequestParam("author") String author) {
+        return bookService.findByAuthorContainingIgnoreCase(author);
+    }
+
     @PostMapping
-    public Book createBook(@RequestBody Book book) {
-        return bookService.save(book);
+    public ResponseEntity<Book> createBook(@RequestBody Book book) {
+        Book savedBook = bookService.save(book);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedBook);
     }
 
-    /**
-     * PUT /api/books/{id}
-     * Actualiza datos de un libro existente.
-     */
     @PutMapping("/{id}")
-    public Book updateBook(@PathVariable Integer id, @RequestBody Book request) {
-        Book existing = bookService.findById(id);
-        if (existing == null) {
-            // Maneja libro no encontrado
-            return null;
+    public ResponseEntity<Book> updateBook(@PathVariable Integer id, @RequestBody Book bookDetails) {
+        Book existingBook = bookService.findById(id);
+        if (existingBook == null) {
+            return ResponseEntity.notFound().build();
         }
-        existing.setTitle(request.getTitle());
-        existing.setIsbn(request.getIsbn());
-        existing.setPrice(request.getPrice());
-        existing.setImageUrl(request.getImageUrl());
-        existing.setStock(request.getStock());
-        existing.setCategory(request.getCategory());
-        existing.setPublicationDate(request.getPublicationDate());
-        existing.setStatus(request.getStatus());
-        return bookService.save(existing);
+
+        existingBook.setTitle(bookDetails.getTitle());
+        existingBook.setIsbn(bookDetails.getIsbn());
+        existingBook.setPrice(bookDetails.getPrice());
+        existingBook.setImageUrl(bookDetails.getImageUrl());
+        existingBook.setStock(bookDetails.getStock());
+        existingBook.setCategory(bookDetails.getCategory());
+        existingBook.setPublicationDate(bookDetails.getPublicationDate());
+        existingBook.setStatus(bookDetails.getStatus());
+        existingBook.setAuthor(bookDetails.getAuthor());  // <--- Añadido
+
+        Book updatedBook = bookService.save(existingBook);
+        return ResponseEntity.ok(updatedBook);
     }
 
-    /**
-     * DELETE /api/books/{id}
-     * Elimina un libro por su ID.
-     */
     @DeleteMapping("/{id}")
-    public void deleteBook(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteBook(@PathVariable Integer id) {
+        Book book = bookService.findById(id);
+        if (book == null) {
+            return ResponseEntity.notFound().build();
+        }
         bookService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

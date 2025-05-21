@@ -1,8 +1,20 @@
 package com.example.Bookstore.Models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
 import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 @Entity
 @Table(name = "books")
@@ -16,6 +28,9 @@ public class Book {
     @Column(name = "title", nullable = false, length = 100)
     private String title;
 
+    @Column(name = "author", nullable = false, length = 100)
+    private String author;
+
     @Column(name = "isbn", nullable = false, length = 20)
     private String isbn;
 
@@ -28,7 +43,6 @@ public class Book {
     @Column(name = "stock", nullable = false)
     private Integer stock;
 
-    // Anotación para ignorar la parte inversa y así evitar el ciclo en JSON
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     @JsonIgnore
@@ -48,6 +62,13 @@ public class Book {
     public Book() {
     }
 
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    } 
     public Integer getBookId() {
         return bookId;
     }

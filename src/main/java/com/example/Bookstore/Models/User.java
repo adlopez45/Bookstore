@@ -1,18 +1,22 @@
 package com.example.Bookstore.Models;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "userId")
+
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(unique= true, name = "user_id", nullable= false)
+    @Column(unique = true, name = "user_id", nullable = false)
     private Integer userId;
 
     @Column(name = "first_name", nullable = false, length = 100)
@@ -24,34 +28,25 @@ public class User {
     @Column(name = "email", nullable = false, length = 100)
     private String email;
 
-    // Relación con City
-    @ManyToOne(fetch = FetchType.LAZY)
+    // Se asume que las claves foráneas tienen registros válidos
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "city_id", nullable = false)
-    @JsonManagedReference // Indica que esta parte de la relación es la que se serializa
     private City city;
 
-    // Relación con Country
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "country_id", nullable = false)
-    @JsonManagedReference
     private Country country;
 
-    // Relación con Role
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
-    @JsonManagedReference
     private Role role;
 
-    // Relación con Profession
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "profession_id")
-    @JsonManagedReference
     private Profession profession;
 
-    // Relación con Gender
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "gender_id")
-    @JsonManagedReference
     private Gender gender;
 
     @Column(name = "age")
@@ -64,19 +59,17 @@ public class User {
     @Column(name = "created_at")
     private Date createdAt;
 
-    // Relación con Purchases
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonBackReference // Evita la recursión al serializar
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Purchase> purchases;
 
-    // Relación con MembershipCards
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonBackReference // Evita la recursión al serializar
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<MembershipCard> membershipCards;
 
-    public User() {}
+    public User() {
+    }
 
     // Getters y Setters
+
     public Integer getUserId() { return userId; }
     public void setUserId(Integer userId) { this.userId = userId; }
 

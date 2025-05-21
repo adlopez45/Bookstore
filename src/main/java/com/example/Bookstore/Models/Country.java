@@ -1,13 +1,15 @@
 package com.example.Bookstore.Models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "countries")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Country {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "country_id")
@@ -23,62 +25,48 @@ public class Country {
     @Column(name = "created_at")
     private Date createdAt;
 
+    // Relación sin anotaciones de referencia
     @OneToMany(mappedBy = "country", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonManagedReference // Permite que las ciudades sean serializadas sin causar un ciclo
     private List<City> cities;
 
     @OneToMany(mappedBy = "country", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonManagedReference // Permite que los usuarios sean serializados sin causar un ciclo
     private List<User> users;
 
-    public Country() {
-    }
-
+    // Getters y Setters
     public Integer getCountryId() {
         return countryId;
     }
-
     public void setCountryId(Integer countryId) {
         this.countryId = countryId;
     }
-
     public String getCountryName() {
         return countryName;
     }
-
     public void setCountryName(String countryName) {
         this.countryName = countryName;
     }
-
     public Byte getStatus() {
         return status;
     }
-
     public void setStatus(Byte status) {
         this.status = status;
     }
-
     public Date getCreatedAt() {
         return createdAt;
     }
-
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
-
     public List<City> getCities() {
         return cities;
     }
-
     public void setCities(List<City> cities) {
         this.cities = cities;
     }
-
-   /* public List<User> getUsers() {
+    public List<User> getUsers() {
         return users;
     }
-
     public void setUsers(List<User> users) {
         this.users = users;
-    } */ 
+    }
 }

@@ -1,29 +1,28 @@
 package com.example.Bookstore.DTO;
+
 import java.util.List;
 
 public class PurchaseRequest {
-    private Long userId;
-    private Long cardId;
+    private Integer userId;    // Ya lo tienes como Integer
+    private Integer cardId;    // Ya lo tienes como Integer
     private List<BookPurchase> books;
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
-
-    public Long getCardId() { return cardId; }
-    public void setCardId(Long cardId) { this.cardId = cardId; }
-
+    // Getters y Setters (asumo que ya los tienes)
+    public Integer getUserId() { return userId; }
+    public void setUserId(Integer userId) { this.userId = userId; }
+    public Integer getCardId() { return cardId; }
+    public void setCardId(Integer cardId) { this.cardId = cardId; }
     public List<BookPurchase> getBooks() { return books; }
     public void setBooks(List<BookPurchase> books) { this.books = books; }
 
     public static class BookPurchase {
-        private Long bookId;
-        private int quantity;
+        private Integer bookId; // Ya lo tienes como Integer
+        private int quantity; // Primitivo está bien aquí
 
-        public Long getBookId() { return bookId; }
-        public void setBookId(Long bookId) { this.bookId = bookId; }
-
+        // Getters y Setters (asumo que ya los tienes)
+        public Integer getBookId() { return bookId; }
+        public void setBookId(Integer bookId) { this.bookId = bookId; }
         public int getQuantity() { return quantity; }
         public void setQuantity(int quantity) { this.quantity = quantity; }
     }
 }
-

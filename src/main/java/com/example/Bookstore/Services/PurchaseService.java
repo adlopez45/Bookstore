@@ -1,21 +1,22 @@
 package com.example.Bookstore.Services;
 
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.Bookstore.DTO.PurchaseRequest;
 import com.example.Bookstore.Models.Book;
 import com.example.Bookstore.Models.MembershipCard;
 import com.example.Bookstore.Models.Purchase;
 import com.example.Bookstore.Models.PurchaseDetails;
+import com.example.Bookstore.Models.User;
 import com.example.Bookstore.Repositories.BookRepository;
 import com.example.Bookstore.Repositories.MembershipCardRepository;
 import com.example.Bookstore.Repositories.PurchaseDetailsRepository;
 import com.example.Bookstore.Repositories.PurchaseRepository;
-import com.example.Bookstore.Models.User;
 import com.example.Bookstore.Repositories.UserRepository;
 
 @Service
@@ -24,91 +25,98 @@ public class PurchaseService {
     private final BookRepository bookRepository;
     private final MembershipCardRepository cardRepository;
     private final PurchaseRepository purchaseRepository;
-    private final PurchaseDetailsRepository purchaseDetailRepository;
+    private final PurchaseDetailsRepository purchaseDetailsRepository;
     private final UserRepository userRepository;
 
-    public PurchaseService(BookRepository bookRepository, MembershipCardRepository cardRepository, 
-                           PurchaseRepository purchaseRepository, PurchaseDetailsRepository purchaseDetailRepository, UserRepository userRepository ) {
+    @Autowired
+    public PurchaseService(
+            BookRepository bookRepository,
+            MembershipCardRepository cardRepository,
+            PurchaseRepository purchaseRepository,
+            PurchaseDetailsRepository purchaseDetailsRepository,
+            UserRepository userRepository) {
         this.bookRepository = bookRepository;
         this.cardRepository = cardRepository;
         this.purchaseRepository = purchaseRepository;
-        this.purchaseDetailRepository = purchaseDetailRepository;
+        this.purchaseDetailsRepository = purchaseDetailsRepository;
         this.userRepository = userRepository;
     }
 
     @Transactional
-    public String makePurchase(PurchaseRequest request) {
-        // Verificar que la tarjeta existe
-        MembershipCard card = cardRepository.findById(request.getCardId().intValue())
-                .orElseThrow(() -> new RuntimeException("Tarjeta no encontrada"));
+    public Purchase makePurchase(PurchaseRequest request) {
+        // 1. Validate card and user
+        MembershipCard card = cardRepository.findById(request.getCardId())
+            .orElseThrow(() -> new IllegalArgumentException("Tarjeta no encontrada"));
 
-        double totalPrice = 0.0;
+        User user = userRepository.findById(request.getUserId())
+            .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
+        // 2. Create purchase
+        Purchase purchase = new Purchase();
+        purchase.setUser(user);
+        purchase.setMembershipCard(card); // Changed from setCard to setMembershipCard
+        purchase.setStatus((byte) 1);
+        purchase.setCreatedAt(new Date());
+
+        // Save purchase first to get ID
+        purchase = purchaseRepository.save(purchase);
+
+        double total = 0.0;
+
+        // 3. Process each book
         for (PurchaseRequest.BookPurchase item : request.getBooks()) {
-            Book book = bookRepository.findById(item.getBookId().intValue())
-                    .orElseThrow(() -> new RuntimeException("Libro no encontrado"));
+            Book book = bookRepository.findById(item.getBookId())
+                .orElseThrow(() -> new IllegalArgumentException("Libro no encontrado"));
 
             if (book.getStock() < item.getQuantity()) {
-                throw new RuntimeException("Stock insuficiente para el libro: " + book.getTitle());
+                throw new IllegalStateException("Stock insuficiente para: " + book.getTitle());
             }
 
-            totalPrice += book.getPrice() * item.getQuantity();
-        }
+            // Calculate subtotal
+            double subtotal = book.getPrice() * item.getQuantity();
+            total += subtotal;
 
-        // Verificar si el saldo de la tarjeta es suficiente
-        if (card.getBalance() < totalPrice) {
-            throw new RuntimeException("Saldo insuficiente en la tarjeta");
-        }
-
-        // Descontar saldo de la tarjeta
-        card.setBalance(card.getBalance() - totalPrice);
-        cardRepository.save(card);
-
-        // Crear compra
-        Purchase purchase = new Purchase();
-        User user = userRepository.findById(request.getUserId().intValue())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        purchase.setUser(user);
-        purchase.setCard(card);
-        purchase.setTotal(totalPrice);
-        purchase.setStatus((byte) 1); // Compra activa
-        purchaseRepository.save(purchase);
-
-        // Registrar detalles de la compra y actualizar stock
-        for (PurchaseRequest.BookPurchase item : request.getBooks()) {
-            Book book = bookRepository.findById(item.getBookId().intValue()).get();
-            book.setStock(book.getStock() - item.getQuantity());
-            bookRepository.save(book);
-
+            // Create purchase detail
             PurchaseDetails detail = new PurchaseDetails();
             detail.setPurchase(purchase);
             detail.setBook(book);
             detail.setQuantity(item.getQuantity());
             detail.setUnitPrice(book.getPrice());
-            detail.setSubtotal(book.getPrice() * item.getQuantity());
-            purchaseDetailRepository.save(detail);
+            detail.setSubtotal(subtotal);
+            detail.setCreatedAt(new Date());
+
+            // Save purchase detail
+            purchaseDetailsRepository.save(detail);
+
+            // Update book stock
+            book.setStock(book.getStock() - item.getQuantity());
+            bookRepository.save(book);
         }
 
-        return "Compra realizada con éxito";
+        // 4. Validate and update card balance
+        if (card.getBalance() < total) {
+            throw new IllegalStateException("Saldo insuficiente en la tarjeta");
+        }
+        card.setBalance(card.getBalance() - total);
+        cardRepository.save(card);
+
+        // 5. Set total and update purchase
+        purchase.setTotal(total);
+        return purchaseRepository.save(purchase);
     }
 
-    // CREATE/UPDATE
     public Purchase save(Purchase purchase) {
         return purchaseRepository.save(purchase);
     }
 
-    // READ (todos)
     public List<Purchase> findAll() {
         return purchaseRepository.findAll();
     }
 
-    // READ (uno por ID)
     public Purchase findById(Integer id) {
-        Optional<Purchase> optional = purchaseRepository.findById(id);
-        return optional.orElse(null);
+        return purchaseRepository.findById(id).orElse(null);
     }
 
-    // DELETE
     public void deleteById(Integer id) {
         purchaseRepository.deleteById(id);
     }
