@@ -15,7 +15,7 @@ const mapApiBookToFrontendBook = (apiBook: ApiBook): Book => {
     price: `${apiBook.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}`,
     numericPrice: apiBook.price,
     isbn: apiBook.isbn,
-    category: (apiBook.categoryName as BookCategory) || BookCategory.Fiction,
+    category: String(apiBook.categoryId) as BookCategory || BookCategory.Fiction,
     publishDate: apiBook.publicationDate ? new Date(apiBook.publicationDate).toISOString().split('T')[0] : "Fecha Desconocida",
   };
 };
@@ -72,7 +72,7 @@ const ShopPage: React.FC = () => {
         if (!matchesTitle && !matchesISBN && !matchesAuthor) return false;
       }
 
-      // Category filter
+      // Category filter - now comparing category IDs
       if (selectedCategory !== 'all') {
         if (book.category !== selectedCategory) return false;
       }
