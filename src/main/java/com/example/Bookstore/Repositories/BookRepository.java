@@ -2,15 +2,12 @@ package com.example.Bookstore.Repositories;
 
 import com.example.Bookstore.Models.Book;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
-public interface BookRepository extends JpaRepository<Book, Integer> {
-
+@Repository
+public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findByTitleContainingIgnoreCase(String title);
-
-    Book findByIsbn(String isbn);
-
-    List<Book> findByTitle(String title);
-    
     List<Book> findByAuthorContainingIgnoreCase(String author);
 }
