@@ -1,22 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react'; 
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import BookGrid from '../components/BookGrid';
 import SearchFilters from '../components/SearchFilters';
 import { Book, BookCategory, PriceRange } from '../types/Book';
-import { fetchAllBooksFromApi, ApiBook } from '../services/bookService';
+import { fetchAllBooksFromApi, searchBooksByTitle, searchBooksByAuthor, ApiBook } from '../services/bookService';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const mapApiBookToFrontendBook = (apiBook: ApiBook): Book => {
   return {
     id: String(apiBook.bookId),
     title: apiBook.title,
-    author: apiBook.authorName,
-    description: apiBook.description,
+    author: apiBook.author,
+    description: apiBook.description || 'No description available',
     coverImage: apiBook.imageUrl,
     price: `${apiBook.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}`,
     numericPrice: apiBook.price,
     isbn: apiBook.isbn,
-    category: String(apiBook.categoryId) as BookCategory || BookCategory.Fiction,
-    publishDate: apiBook.publicationDate ? new Date(apiBook.publicationDate).toISOString().split('T')[0] : "Fecha Desconocida",
+    category: (apiBook.categoryName as BookCategory) || BookCategory.Fiction,
+    publishDate: apiBook.publicationDate ? new Date(apiBook.publicationDate).toISOString().split('T')[0] : "Fecha no disponible",
   };
 };
 
@@ -25,59 +26,56 @@ const ShopPage: React.FC = () => {
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get('q') || '';
 
-  const [loadedBooks, setLoadedBooks] = useState<Book[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedCategory, setSelectedCategory] = useState<BookCategory | 'all'>('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState<PriceRange | null>(null);
-  const [selectedAuthorState, setSelectedAuthorState] = useState('');
+  const [selectedAuthor, setSelectedAuthor] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   useEffect(() => {
     const loadBooks = async () => {
-      setIsLoading(true);
-      setError(null);
       try {
-        const apiBooksResult = await fetchAllBooksFromApi();
-        const mappedBooks = apiBooksResult.map(mapApiBookToFrontendBook);
-        setLoadedBooks(mappedBooks);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
+        setIsLoading(true);
+        setError(null);
+        let apiBooks: ApiBook[];
+
+        if (searchQuery) {
+          // Intentar buscar por título primero
+          apiBooks = await searchBooksByTitle(searchQuery);
+          
+          // Si no hay resultados por título, buscar por autor
+          if (apiBooks.length === 0) {
+            apiBooks = await searchBooksByAuthor(searchQuery);
+          }
         } else {
-          setError("Ocurrió un error desconocido al cargar los libros.");
+          apiBooks = await fetchAllBooksFromApi();
         }
+
+        const mappedBooks = apiBooks.map(mapApiBookToFrontendBook);
+        setBooks(mappedBooks);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido al cargar los libros");
       } finally {
         setIsLoading(false);
       }
     };
 
     loadBooks();
-  }, []);
+  }, [searchQuery]);
 
   const authors = useMemo(() => {
-    return Array.from(new Set(loadedBooks.map(book => book.author))).sort();
-  }, [loadedBooks]);
+    return Array.from(new Set(books.map(book => book.author))).sort();
+  }, [books]);
 
   const filteredBooks = useMemo(() => {
-    return loadedBooks.filter(book => {
-      // Search query filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = book.title.toLowerCase().includes(query);
-        const matchesISBN = book.isbn.toLowerCase().includes(query);
-        const matchesAuthor = book.author.toLowerCase().includes(query);
-
-        if (!matchesTitle && !matchesISBN && !matchesAuthor) return false;
+    return books.filter(book => {
+      if (selectedCategory !== 'all' && book.category !== selectedCategory) {
+        return false;
       }
 
-      // Category filter - now comparing category IDs
-      if (selectedCategory !== 'all') {
-        if (book.category !== selectedCategory) return false;
-      }
-
-      // Price range filter
       if (selectedPriceRange) {
         const price = book.numericPrice;
         switch (selectedPriceRange) {
@@ -96,12 +94,10 @@ const ShopPage: React.FC = () => {
         }
       }
 
-      // Author filter
-      if (selectedAuthorState && selectedAuthorState !== '') {
-        if (book.author !== selectedAuthorState) return false;
+      if (selectedAuthor && book.author !== selectedAuthor) {
+        return false;
       }
 
-      // Date range filter
       if (dateRange.start || dateRange.end) {
         const bookDate = new Date(book.publishDate);
         if (dateRange.start && bookDate < new Date(dateRange.start)) return false;
@@ -110,19 +106,27 @@ const ShopPage: React.FC = () => {
 
       return true;
     });
-  }, [loadedBooks, searchQuery, selectedCategory, selectedPriceRange, selectedAuthorState, dateRange]);
+  }, [books, selectedCategory, selectedPriceRange, selectedAuthor, dateRange]);
 
   if (isLoading) {
-    return <div className="page-transition text-center py-10">Cargando libros...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <LoadingSpinner size="large" />
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="page-transition text-center py-10 text-red-500">Error al cargar libros: {error}</div>;
+    return (
+      <div className="text-center py-10 text-red-500">
+        Error al cargar libros: {error}
+      </div>
+    );
   }
 
   return (
     <div className="page-transition">
-      <h1 className="text-3xl font-bold mb-8">Shop Books</h1>
+      <h1 className="text-3xl font-bold mb-8">Tienda de Libros</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-1">
@@ -131,8 +135,8 @@ const ShopPage: React.FC = () => {
             setSelectedCategory={setSelectedCategory}
             selectedPriceRange={selectedPriceRange}
             setSelectedPriceRange={setSelectedPriceRange}
-            selectedAuthor={selectedAuthorState}
-            setSelectedAuthor={setSelectedAuthorState}
+            selectedAuthor={selectedAuthor}
+            setSelectedAuthor={setSelectedAuthor}
             dateRange={dateRange}
             setDateRange={setDateRange}
             authors={authors}
