@@ -1,28 +1,40 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { loginSchema, type LoginFormData } from '../utils/validation';
+import { useLoadingState } from '../hooks/useLoadingState';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const { isLoading, withLoading } = useLoadingState();
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState<string>('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    // Mock login
-    if (email === 'user@example.com' && password === 'password') {
-      localStorage.setItem('isAuthenticated', 'true');
+    try {
+      const validatedData = loginSchema.parse(formData);
+      await withLoading(login(validatedData));
       navigate('/');
-    } else {
-      setError('Invalid credentials');
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -52,10 +64,12 @@ const LoginPage: React.FC = () => {
               </label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7c6a9a] focus:border-[#7c6a9a]"
                 placeholder="Enter your email"
+                disabled={isLoading}
               />
             </div>
             
@@ -65,24 +79,21 @@ const LoginPage: React.FC = () => {
               </label>
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7c6a9a] focus:border-[#7c6a9a]"
                 placeholder="Enter your password"
+                disabled={isLoading}
               />
-            </div>
-            
-            <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-sm text-[#7c6a9a] hover:underline">
-                Forgot password?
-              </Link>
             </div>
             
             <button
               type="submit"
-              className="w-full bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              disabled={isLoading}
+              className="w-full bg-gray-900 text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              Sign In
+              {isLoading ? <LoadingSpinner size="small" /> : 'Sign In'}
             </button>
           </form>
         </div>
