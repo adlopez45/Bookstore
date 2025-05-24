@@ -33,6 +33,13 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         
+        <!-- H2 Database -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Azure Cosmos DB Dependencies -->
         <dependency>
             <groupId>com.azure.spring</groupId>
@@ -93,5 +100,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
